@@ -1,0 +1,11 @@
+Package: ScoringModels
+Type: Package
+Title: ScoringModels: Automatic Scoring Model Building
+Version: 1.0
+Date: 2017-07-30
+Author: Yao Siyuan <siyuan.yao@gmail.com>
+Maintainer: Yao Siyuan <siyuan.yao@gmail.com>
+Description: This package enables you to build a scoring model with ease and good enough performance.
+License: GPL (>= 2)
+Imports: Rcpp (>= 0.12.12)
+LinkingTo: Rcpp

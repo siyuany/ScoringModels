@@ -13,12 +13,15 @@
 #' output file will be generated, and the result will be returned as a
 #' \code{data.frame}, used for debugging.
 #'
+#' @return res If \code{out_file} is \code{NULL} or \code{NA}, a data.frame will
+#' be returned. Otherwise, nothing returned but an excel file will be generated.
+#'
 #' @importFrom xlsx createWorkbook
 #' @importFrom xlsx createSheet
 #' @importFrom xlsx saveWorkbook
 #' @importFrom xlsx write.xlsx2
-#' @importFrom fBasics skewness
-#' @importFrom fBasics kurtosis
+#' @importFrom timeDate skewness
+#' @importFrom timeDate kurtosis
 #' @export
 
 data_overview <- function(data_set, type_infer = TRUE,
@@ -73,13 +76,14 @@ data_overview <- function(data_set, type_infer = TRUE,
 
     # six-point summary (Min., 1st Qu., Median, Mean, 3rd Qu., Max.)
     numeric_columns <- names(types)[types == 'Numeric']
+    character_columns <- names(types)[types == 'Character']
     sps <- lapply(data_set[numeric_columns], function(x) {
         x <- as.numeric(x)
         s <- summary(x)
         list("Min."     = s[1],
-             "1st Qu."  = s[2],
+             "1st.Qu."  = s[2],
              "Median"   = s[3],
-             "3rd Qu."  = s[5],
+             "3rd.Qu."  = s[5],
              "Max."     = s[6],
              "Mean"     = s[4],
              "Sd"       = sd(x, na.rm = TRUE),
@@ -88,13 +92,25 @@ data_overview <- function(data_set, type_infer = TRUE,
     })
     sps <- as.data.frame(t(do.call(cbind, args = sps)),
                          stringsAsFactors = FALSE)
-    sps <- sps[names(types), ]
-    rownames(sps) <- names(types)
+    sps$Variable <- rownames(sps)
+    rownames(sps) <- NULL
 
     old_options <- options()
     options(stringsAsFactors = FALSE)
-    res <- cbind(in_model = 'default', Type = types, basic_stats, sps)
+    res <- cbind(Variable = names(types),
+                 in_model = 'default',
+                 Type     = types,
+                 basic_stats)
     options(old_options)
+    rownames(res) <- NULL
+
+    res <- merge(res, sps, by = "Variable", all.x = TRUE)
+    res <- as.data.frame(lapply(res, unlist), stringsAsFactors = FALSE)
+    rownames(res) <- NULL
+    colnames(res) <- c("Variable", "in_model", "Type", "Obs",
+                       "Mode_10", "HRatio", "Missing", "MissingR",
+                       "UniVale", "Min.", "1st.Qu.", "Median", "3rd.Qu.",
+                       "Max.", "Mean", "Sd", "Skewness", "Kurtosis")
 
     if (is.null(out_file) | is.na(out_file)) {
         return(res)
@@ -104,7 +120,7 @@ data_overview <- function(data_set, type_infer = TRUE,
         intro_sheet <- createSheet(wb, sheetName = "Introduction")
         data_ov_sheet <- createSheet(wb, sheetName = "Data Overview")
         introduction <- t(data.frame(
-            "in_model" = "Whether the variable should be included in model: default/yes/no",
+            "in_model" = "Whether the variable should be included in model: default/yes/no/objective",
             "Type" = "Type of a column: Numeric/Character, can be revised",
             "Obs" = "Number of observations",
             "Mode_10" = "10 values of the highest frequency in descending order",
@@ -113,9 +129,9 @@ data_overview <- function(data_set, type_infer = TRUE,
             "MissingR" = "Ratio of missing values",
             "UniValue" = "Number of unique values",
             "Min." = "Minimum value",
-            "1st Qu." = "1st Quartile",
+            "1st.Qu." = "1st Quartile",
             "Median" = "Median",
-            "3rd Qu." = "3rd Quartile",
+            "3rd.Qu." = "3rd Quartile",
             "Max." = "Maximun value",
             "Mean" = "Average with NA removed",
             "Sd" = "Standard deviation with NA removed",
@@ -124,7 +140,7 @@ data_overview <- function(data_set, type_infer = TRUE,
             stringsAsFactors = FALSE
         ))
         addDataFrame(introduction, sheet = intro_sheet, col.names = FALSE)
-        addDataFrame(res, sheet = data_ov_sheet)
+        addDataFrame(res, sheet = data_ov_sheet, row.names = FALSE)
         saveWorkbook(wb, file = filename)
         invisible()
     }

@@ -33,3 +33,6 @@ vignettes/*.pdf
 *.utf8.md
 *.knit.md
 .Rproj.user
+
+data_description.xlsx
+./ScoringModles/data_description.xlsx

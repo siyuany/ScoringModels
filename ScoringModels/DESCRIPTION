@@ -1,7 +1,7 @@
 Package: ScoringModels
 Type: Package
 Title: ScoringModels: Automatic Scoring Model Building
-Version: 1.0
+Version: 1.0.9
 Date: 2017-07-30
 Author: Yao Siyuan <siyuan.yao@gmail.com>
 Maintainer: Yao Siyuan <siyuan.yao@gmail.com>

@@ -3,6 +3,5 @@
 export(data_overview)
 export(preprocess)
 import(xlsx)
-importFrom(stringr,str_to_lower)
 importFrom(timeDate,kurtosis)
 importFrom(timeDate,skewness)

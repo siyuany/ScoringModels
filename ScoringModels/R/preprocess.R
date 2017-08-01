@@ -14,7 +14,6 @@
 #' @return data.frame the cleaned \code{data.frame}
 #'
 #' @import xlsx
-#' @importFrom stringr str_to_lower
 #' @export
 
 preprocess <- function(data_set,
@@ -35,7 +34,7 @@ preprocess <- function(data_set,
     }
 
     filename <- paste0(xlsx_file, ".xlsx")
-    data_desc <- read.xlsx2(filename, sheetName, header = TRUE,
+    data_desc <- read.xlsx2(filename,  sheetName = sheetName, header = TRUE,
                             stringsAsFactors = FALSE)
     # Target -------------------------------------------------------------------
     objective <-
@@ -138,5 +137,6 @@ preprocess <- function(data_set,
     })
     data_copy <- as.data.frame(data_copy, col.names = in_model,
                                stringsAsFactors = FALSE)
+    data_overview(data_copy, out_file = "cleaned_data")
     data_copy
 }

@@ -17,6 +17,10 @@ the type will be the storing type of the column.}
 output file will be generated, and the result will be returned as a
 \code{data.frame}, used for debugging.}
 }
+\value{
+res If \code{out_file} is \code{NULL} or \code{NA}, a data.frame will
+be returned. Otherwise, nothing returned but an excel file will be generated.
+}
 \description{
 \code{data_overview} generates an excel file describe the data's
 basic information like the dimensions, the type of each column, basic stats

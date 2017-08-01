@@ -76,7 +76,6 @@ data_overview <- function(data_set, type_infer = TRUE,
 
     # six-point summary (Min., 1st Qu., Median, Mean, 3rd Qu., Max.)
     numeric_columns <- names(types)[types == 'Numeric']
-    character_columns <- names(types)[types == 'Character']
     sps <- lapply(data_set[numeric_columns], function(x) {
         x <- as.numeric(x)
         s <- summary(x)
@@ -109,7 +108,7 @@ data_overview <- function(data_set, type_infer = TRUE,
     rownames(res) <- NULL
     colnames(res) <- c("Variable", "in_model", "Type", "Obs",
                        "Mode_10", "HRatio", "Missing", "MissingR",
-                       "UniVale", "Min.", "1st.Qu.", "Median", "3rd.Qu.",
+                       "UniValue", "Min.", "1st.Qu.", "Median", "3rd.Qu.",
                        "Max.", "Mean", "Sd", "Skewness", "Kurtosis")
 
     if (is.null(out_file) | is.na(out_file)) {

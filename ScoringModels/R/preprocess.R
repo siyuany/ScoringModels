@@ -13,7 +13,7 @@
 #' @param max_na_ratio The tolerate maximum ratio of missing value in a var
 #' @return data.frame the cleaned \code{data.frame}
 #'
-#' @importFrom xlsx read.xlsx2
+#' @import xlsx
 #' @importFrom stringr str_to_lower
 #' @export
 

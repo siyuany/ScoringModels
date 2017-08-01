@@ -16,10 +16,7 @@
 #' @return res If \code{out_file} is \code{NULL} or \code{NA}, a data.frame will
 #' be returned. Otherwise, nothing returned but an excel file will be generated.
 #'
-#' @importFrom xlsx createWorkbook
-#' @importFrom xlsx createSheet
-#' @importFrom xlsx saveWorkbook
-#' @importFrom xlsx write.xlsx2
+#' @import xlsx
 #' @importFrom timeDate skewness
 #' @importFrom timeDate kurtosis
 #' @export

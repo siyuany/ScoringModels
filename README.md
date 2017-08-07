@@ -9,7 +9,7 @@
 
 * 变量相关性分析：支持Pearson/Spearman/Kendall相关系数计算，用于变量初步筛选，`pairwise.complete.obs = TRUE`
 
-* 变量自动分箱（可选）：根据目标变量对解释变量进行监督式分箱，WoE/IV
+* 变量自动分箱（可选）：根据目标变量对解释变量进行有监督分箱，WoE/IV
 
 * 变量二次筛选（可选）：IV值筛选、Boruta
 

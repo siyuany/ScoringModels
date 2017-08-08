@@ -69,5 +69,10 @@ woe.default <- function(predictor, response, good = NA, ...) {
 #' @describeIn woe generic for data.frame
 #' @export
 woe.data.frame <- function(df, x, y, ...) {
+    if (!x %in% colnames(df)) 
+        stop("x does not exist in df")
+    if (!y %in% colnames(df))
+        stop("y does not exist in df")
+
     woe.default(df[, x], df[, y], ...)
 }

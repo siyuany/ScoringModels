@@ -61,15 +61,17 @@ woe.default <- function(predictor, response, good = NA, ...) {
     tbl$WoE <- log(tbl$GoodR / tbl$BadR)
     tbl$IV <- (tbl$GoodR - tbl$BadR) * tbl$WoE
     tbl$IV[is.infinite(tbl$IV)] <- NA
+    tbl$Percentage <- (tbl$Good + tbl$Bad) / sum(tbl['Total', c('Good', 'Bad')])
     tbl['Total', 'IV'] <- sum(tbl$IV, na.rm = TRUE)
     class(tbl) <- c('woe', class(tbl))
+    rownames(tbl) <- NULL
     tbl
 }
 
 #' @describeIn woe generic for data.frame
 #' @export
 woe.data.frame <- function(df, x, y, ...) {
-    if (!x %in% colnames(df)) 
+    if (!x %in% colnames(df))
         stop("x does not exist in df")
     if (!y %in% colnames(df))
         stop("y does not exist in df")

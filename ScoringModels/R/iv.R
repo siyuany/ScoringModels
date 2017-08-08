@@ -28,7 +28,7 @@ iv <- function(...) {
 #' @describeIn iv Calculate IV based on a \code{woe} object
 #' @export
 iv.woe <- function(woe.tbl) {
-    woe.tbl['Total', 'IV']
+    woe.tbl[woe.tbl$Levels == 'Total', 'IV']
 }
 
 #' @describeIn iv Implicitly call \code{woe} to calculate a woe object

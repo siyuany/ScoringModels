@@ -1,6 +1,6 @@
 #' @export
 
-cor_anal <- function(data_set,
-                     method = c("all", "pearson", "spearman", "kendall")) {
+corr_anal <- function(data_set,
+                      method = c("all", "pearson", "spearman", "kendall")) {
 
 }

@@ -24,26 +24,39 @@ prop.test <- function(y1, n1, y2, n2, sig.level = 0.05,
 }
 
 label.numeric <- function(x, cutp, right = TRUE) {
-    if (!is.numeric(x)) 
+    if (!is.numeric(x))
         stop("'x' must be numeric")
     cutp <- sort(unique(cutp))
-    
+
     y <- rep(0, length(x))
-    
+
     for (i in 1:length(cutp)) {
         y[y == 0 & (x < cutp[i] | (right & x == cutp[i]))] <- i
     }
     y[y == 0] <- i + 1
     y[is.na(x)] <- i + 2
-    
+
+    if (length(cutp) == 1)
+        interval <- c(paste0('(, ', cutp), paste0(cutp, ', )'))
+    if (length(cutp) > 1)
+        interval <- c(
+            paste0('(, ', cutp[1]),
+            paste(c(cutp[1:(length(cutp) - 1)]),
+                  c(cutp[2:length(cutp)]),
+                  sep = ', '),
+            paste0(cutp[length(cutp)], ', )'))
+
     if (right) {
-        label <- c(paste0('<= ', cutp), paste0("> ", cutp[length(cutp)]))
+        interval[1:(length(interval) - 1)] <-
+            paste0(interval[1:(length(interval) - 1)], ']')
+        interval[2:length(interval)] <-
+            paste0('(', interval[2:length(interval)])
     } else {
-        label <- c(paste0('< ', cutp), paste0(">= ", cutp[length(cutp)]))
+        interval[1:(length(interval) - 1)] <-
+            paste0(interval[1:(length(interval) - 1)], ')')
+        interval[2:length(interval)] <-
+            paste0('[', interval[2:length(interval)])
     }
-    if (any(is.na(x))) {
-        label <- c(label, 'Missing')
-    }
-    
-    factor(y, labels = label)
+
+    factor(y, labels = interval)
 }

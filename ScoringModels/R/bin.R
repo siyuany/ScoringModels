@@ -46,59 +46,67 @@ bin.default <- function(predictor,
             type = 1
         ))
 
-    bin.obj <- list(x_disc = rep(1, length(x)),
-                    cutp_level = rep(1, length(avail_cutp)),
-                    cutp = NULL,
-                    iv = 0)
+    bin.obj <- list(bands = c(min(x), max(x)),
+                    iv  = c(0, 0, 0))
+
+    total_good <- sum(y == "Good")
+    total_bad  <- sum(y == "Bad")
 
     cutp_iv <- function(point) {
-        if (point %in% bin.obj$cutp)
+        if (point %in% bin.obj$bands)
             return(list(bin.obj))
+        cut_interval <- max(which(bin.obj$bands < point))
+
         # ratio
-        cutp <- c(bin.obj$cutp, point)
-        cutp <- sort(unique(cutp))
-        cutp_level <- bin.obj$cutp_level
-        level <- max(cutp_level[avail_cutp <= point])
-        x_disc <- bin.obj$x_disc
-        x_disc[x_disc == level & x <= point] <- 2 * level
-        x_disc[x_disc == level & x >  point] <- 2 * level + 1
-        cutp_level[cutp_level == level & avail_cutp <= point] <- 2 * level
-        cutp_level[cutp_level == level & avail_cutp >  point] <- 2 * level + 1
-
-        min_size <- min(tapply(x_disc, x_disc, length))
-        if (min_size < min_ratio * size) {
+        left <- x > bin.obj$bands[cut_interval] & x <= point
+        left_good <- sum(left & y == "Good")
+        left_bad  <- sum(left & y == "Bad")
+        right <- x > point & x <= bin.obj$bands[cut_interval + 1]
+        right_good <- sum(right & y == "Good")
+        right_bad  <- sum(right & y == "Bad")
+        if (min(sum(left), sum(right)) < min_ratio * size) {
             return(list(bin.obj))
         }
-        # statistical test
-        to_test_x <- x_disc[!x_disc %in% bin.obj$x_disc]
-        to_test_y <- y[!x_disc %in% bin.obj$x_disc]
-        tbl <- tapply(to_test_y, to_test_x, function(seg_y) {
-            c(Good = sum(seg_y == 'Good'),
-              Bad  = sum(seg_y == 'Bad'))
-        })
-        test <- prop.test(tbl[[1]][1], sum(tbl[[1]]),
-                          tbl[[2]][1], sum(tbl[[2]]))
-        if (test$p > p) {
+        # prop test
+        res <-
+            prop.test(left_good, sum(left), right_good, sum(right))
+        if (res$p > p) {
             return(list(bin.obj))
         }
+        # iv
+        left_iv <- (left_good / total_good - left_bad / total_bad) *
+            log(left_good / total_good / (left_bad / total_bad))
+        right_iv <-
+            (right_good / total_good - right_bad / total_bad) *
+            log(right_good / total_good / (right_bad / total_bad))
+        iv <- c(bin.obj$iv[1:cut_interval],
+                ifelse(is.infinite(left_iv), 0, left_iv),
+                ifelse(is.infinite(right_iv), 0, right_iv),
+                bin.obj$iv[(cut_interval + 2):length(bin.obj$iv)])
+        if (sum(iv) > sum(bin.obj$iv)) {
+            bin.obj$bands <- c(
+                bin.obj$bands[1:cut_interval],
+                point,
+                bin.obj$bands[(cut_interval + 1):length(bin.obj$bands)]
+            )
+            bin.obj$iv <- iv
+        }
 
-        new_iv <- iv(x_disc, y, good = 'Good')
-        list(list(x_disc = x_disc,
-                  cutp_level = cutp_level,
-                  cutp = cutp,
-                  iv = new_iv))
+        return(list(bin.obj))
     }
 
     # Start binning
     while (TRUE) {
+        # print(bin.obj)
         res <- NULL
         res <-
             foreach(point = avail_cutp, .combine = "c") %do% cutp_iv(point)
 
-        ivs <- sapply(res, function(x) x$iv)
+        ivs <- sapply(res, function(x)
+            sum(x$iv))
         max_iv_index <- which(ivs == max(ivs))[1]
         best <- res[[max_iv_index]]
-        inc <- best$iv - bin.obj$iv
+        inc <- sum(best$iv) - sum(bin.obj$iv)
 
         if (inc > min_iv_inc) {
             bin.obj <- best
@@ -109,13 +117,19 @@ bin.default <- function(predictor,
     }
     # End binning
 
-    switch(result,
-           cutpoints = bin.obj$cutp,
-           woe = woe(bin.obj$x_disc, y, good = 'Good'),
-           iv = bin.obj$iv)
+    cutp <- round(bin.obj$bands[c(-1, -length(bin.obj$bands))], 3)
+    switch(
+        result,
+        iv = sum(bin.obj$iv),
+        woe = {
+            x_disc <- label.numeric(x, cutp)
+            woe(x_disc, y, good = "Good")
+        },
+        cutpoints = cutp
+    )
 }
 
 #' @export
 bin.data.frame <- function(df, x, y, ...) {
-    bin(df[, x], df[, y])
+    bin(df[, x], df[, y], ...)
 }

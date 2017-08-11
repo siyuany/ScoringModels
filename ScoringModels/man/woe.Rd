@@ -4,6 +4,8 @@
 \alias{woe}
 \alias{woe.default}
 \alias{woe.data.frame}
+\alias{SummaryWoe}
+\alias{ReplaceWoe}
 \title{Weight of Evidence}
 \usage{
 woe(...)
@@ -11,6 +13,10 @@ woe(...)
 \method{woe}{default}(predictor, response, good = NA, ...)
 
 \method{woe}{data.frame}(df, x, y, ...)
+
+SummaryWoe(df, y, ...)
+
+ReplaceWoe(df, y, summary_woe)
 }
 \arguments{
 \item{predictor}{a vector representing the predictor}
@@ -26,6 +32,8 @@ response}
 \item{x}{the name of the predictor in \code{df}}
 
 \item{y}{the name of the response in \code{df}}
+
+\item{summary_woe}{result given by SummaryWoe}
 }
 \value{
 a \code{data.frame} showing the WoE of each level, and encapsulated
@@ -46,9 +54,10 @@ discrete variable with respect to a response.
 \dontrun{
 library(ISLR)
 # data.frame generic
-woe(Default, 'student', 'default', good = 'Yes')
+woe(Default, 'student', 'default', good = 'No')
 # default generic
-woe(Default$student, Default$default, good = 'Yes')
+woe(Default$student, Default$default, good = 'No')
+SummaryWoe(Default, 'default', good = 'No')
 }
 
 }

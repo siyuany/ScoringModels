@@ -18,9 +18,10 @@
 #' \dontrun{
 #' library(ISLR)
 #' # data.frame generic
-#' woe(Default, 'student', 'default', good = 'Yes')
+#' woe(Default, 'student', 'default', good = 'No')
 #' # default generic
-#' woe(Default$student, Default$default, good = 'Yes')
+#' woe(Default$student, Default$default, good = 'No')
+#' SummaryWoe(Default, 'default', good = 'No')
 #' }
 #'
 #' @export
@@ -77,4 +78,82 @@ woe.data.frame <- function(df, x, y, ...) {
         stop("y does not exist in df")
 
     woe.default(df[, x], df[, y], ...)
+}
+
+
+#' @rdname woe
+#' @export
+SummaryWoe <- function(df, y, ...) {
+    predictors <- colnames(df)
+    if (!any(y == predictors)) {
+        stop("'y' does not exist in df")
+    }
+
+    predictors <- predictors[predictors != y]
+    summary_woe <- list()
+    for (predictor in predictors) {
+        if (is.factor(df[, predictor])) {
+            .woe <- woe(df, predictor, y, ...)
+            summary_woe[[predictor]] <- list(woe = .woe,
+                                             iv  = .woe[.woe$Levels == "Total",
+                                                        "WoE"])
+        }
+
+        if (is.numeric(df[, predictor])) {
+            .cut <- bin(df, predictor, y, result = "cutpoints", ...)
+            .woe <- woe(label.numeric(df[, predictor], .cut),
+                        df[, y], ...)
+            summary_woe[[predictor]] <- list(woe  = .woe,
+                                             iv   = .woe[.woe$Levels == "Total",
+                                                         "WoE"],
+                                             cutp = .cut)
+        }
+    }
+
+    class(summary_woe) <- c('Summary.WoE', class(summary_woe))
+    summary_woe
+}
+
+#' @rdname woe
+#' @param summary_woe result given by SummaryWoe
+#' @importFrom stringr str_length
+#' @export
+ReplaceWoe <- function(df, y, summary_woe) {
+    columns <- colnames(df)
+    if (!any(y == columns)) {
+        stop("'y' does not exist in df")
+    }
+    if (class(summary_woe)[1] != 'Summary.WoE') {
+        stop('summary_woe should be an object of Summary.WoE')
+    }
+
+    new_df <- as.data.frame(df[[y]], stringsAsFactors = FALSE)
+    colnames(new_df) <- y
+    predictors <- names(summary_woe)
+    for (predictor in predictors) {
+        if (!any(predictor == columns)) {
+            stop(sprintf('%s does not exist in df', predictor))
+        }
+        n_char <- str_length(predictor)
+        if (substr(predictor, n_char - 3, n_char) == '_woe') {
+            warning(sprintf("%s ends with '_woe'. Skip!", predictor))
+            next
+        }
+
+        .woe <- summary_woe[[predictor]][['woe']]
+        .woe <- .woe[-nrow(.woe), ]
+        if (is.factor(df[, predictor])) {
+            new_df[, paste0(predictor, '_woe')] <-
+                .woe[match(df[, predictor], .woe[, 'Levels']), 'WoE']
+        }
+
+        if (is.numeric(df[, predictor])) {
+            cutp <- summary_woe[[predictor]][['cutp']]
+            x_disc <- label.numeric(df[, predictor], cutp)
+            new_df[, paste0(predictor, '_woe')] <-
+                .woe[match(x_disc, .woe[, 'Levels']), 'WoE']
+        }
+    }
+
+    new_df
 }

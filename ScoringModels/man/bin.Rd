@@ -2,10 +2,25 @@
 % Please edit documentation in R/bin.R
 \name{bin}
 \alias{bin}
+\alias{bin.default}
+\alias{bin.data.frame}
 \title{Binning based on Information Value}
 \usage{
 bin(...)
+
+\method{bin}{default}(predictor, response, result = c("iv", "woe",
+  "cutpoints"), good = NA, min_iv_inc = 0.001, min_ratio = 0.05,
+  p = 0.05, ...)
+
+\method{bin}{data.frame}(df, x, y, ...)
 }
 \description{
 Binning based on Information Value
 }
+\section{Methods (by class)}{
+\itemize{
+\item \code{default}: for vector
+
+\item \code{data.frame}: for date.frame
+}}
+

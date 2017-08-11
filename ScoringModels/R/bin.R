@@ -6,6 +6,7 @@ bin <- function(...) {
     UseMethod("bin")
 }
 
+#' @describeIn bin for vector
 #' @export
 bin.default <- function(predictor,
                         response,
@@ -129,6 +130,7 @@ bin.default <- function(predictor,
     )
 }
 
+#' @describeIn bin for date.frame
 #' @export
 bin.data.frame <- function(df, x, y, ...) {
     bin(df[, x], df[, y], ...)

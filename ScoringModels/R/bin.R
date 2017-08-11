@@ -9,7 +9,7 @@ bin <- function(...) {
 #' @export
 bin.default <- function(predictor,
                         response,
-                        result = c("iv", "woe", "cutpoints"),
+                        result = c("cutpoints", "iv", "woe"),
                         good = NA,
                         min_iv_inc = 0.001,
                         min_ratio = 0.05,

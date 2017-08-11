@@ -6,7 +6,7 @@ Date: 2017-07-30
 Author: Yao Siyuan <siyuan.yao@gmail.com>
 Maintainer: Yao Siyuan <siyuan.yao@gmail.com>
 Description: This package enables you to build a scoring model with ease and good enough performance.
-License: GPL (>= 2)
+License: GPL-3
 Imports: timeDate(>= 3012.100), Boruta(>= 5.2.0)
 Depends: xlsx(>= 0.5.7), rJava(>= 0.9-8), xlsxjars(>= 0.6.1)
 RoxygenNote: 6.0.1

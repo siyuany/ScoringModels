@@ -1,6 +1,7 @@
 #' Binning based on Information Value
 #'
 #' @import foreach
+#' @import doParallel
 #' @export
 bin <- function(...) {
     UseMethod("bin")
@@ -15,6 +16,7 @@ bin.default <- function(predictor,
                         min_iv_inc = 0.001,
                         min_ratio = 0.05,
                         p = 0.05,
+                        parallel = TRUE,
                         ...) {
     y_levels <- sort(unique(response))
     if (length(y_levels) <= 1)
@@ -53,6 +55,7 @@ bin.default <- function(predictor,
     total_good <- sum(y == "Good")
     total_bad  <- sum(y == "Bad")
 
+    registerDoParallel(detectCores(logical = FALSE))
     cutp_iv <- function(point) {
         if (point %in% bin.obj$bands)
             return(list(bin.obj))
@@ -80,16 +83,16 @@ bin.default <- function(predictor,
         right_iv <-
             (right_good / total_good - right_bad / total_bad) *
             log(right_good / total_good / (right_bad / total_bad))
-        iv <- c(bin.obj$iv[1:cut_interval],
-                ifelse(is.infinite(left_iv), 0, left_iv),
-                ifelse(is.infinite(right_iv), 0, right_iv),
-                bin.obj$iv[(cut_interval + 2):length(bin.obj$iv)])
+        iv <- c(
+            bin.obj$iv[1:cut_interval],
+            ifelse(is.infinite(left_iv), 0, left_iv),
+            ifelse(is.infinite(right_iv), 0, right_iv),
+            bin.obj$iv[(cut_interval + 2):length(bin.obj$iv)]
+        )
         if (sum(iv) > sum(bin.obj$iv)) {
-            bin.obj$bands <- c(
-                bin.obj$bands[1:cut_interval],
-                point,
-                bin.obj$bands[(cut_interval + 1):length(bin.obj$bands)]
-            )
+            bin.obj$bands <- c(bin.obj$bands[1:cut_interval],
+                               point,
+                               bin.obj$bands[(cut_interval + 1):length(bin.obj$bands)])
             bin.obj$iv <- iv
         }
 
@@ -100,8 +103,13 @@ bin.default <- function(predictor,
     while (TRUE) {
         # print(bin.obj)
         res <- NULL
-        res <-
-            foreach(point = avail_cutp, .combine = "c") %do% cutp_iv(point)
+        if (parallel) {
+            res <-
+                foreach(point = avail_cutp, .combine = "c") %dopar% cutp_iv(point)
+        } else {
+            res <-
+                foreach(point = avail_cutp, .combine = "c") %do% cutp_iv(point)
+        }
 
         ivs <- sapply(res, function(x)
             sum(x$iv))
@@ -117,6 +125,7 @@ bin.default <- function(predictor,
         }
     }
     # End binning
+    stopImplicitCluster()
 
     cutp <- round(bin.obj$bands[c(-1, -length(bin.obj$bands))], 3)
     switch(

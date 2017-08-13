@@ -8,9 +8,9 @@
 \usage{
 bin(...)
 
-\method{bin}{default}(predictor, response, result = c("iv", "woe",
-  "cutpoints"), good = NA, min_iv_inc = 0.001, min_ratio = 0.05,
-  p = 0.05, ...)
+\method{bin}{default}(predictor, response, result = c("cutpoints", "iv",
+  "woe"), good = NA, min_iv_inc = 0.001, min_ratio = 0.05, p = 0.05,
+  parallel = TRUE, ...)
 
 \method{bin}{data.frame}(df, x, y, ...)
 }

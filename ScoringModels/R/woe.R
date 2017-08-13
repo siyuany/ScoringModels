@@ -96,7 +96,7 @@ SummaryWoe <- function(df, y, ...) {
             .woe <- woe(df, predictor, y, ...)
             summary_woe[[predictor]] <- list(woe = .woe,
                                              iv  = .woe[.woe$Levels == "Total",
-                                                        "WoE"])
+                                                        "IV"])
         }
 
         if (is.numeric(df[, predictor])) {
@@ -105,7 +105,7 @@ SummaryWoe <- function(df, y, ...) {
                         df[, y], ...)
             summary_woe[[predictor]] <- list(woe  = .woe,
                                              iv   = .woe[.woe$Levels == "Total",
-                                                         "WoE"],
+                                                         "IV"],
                                              cutp = .cut)
         }
     }

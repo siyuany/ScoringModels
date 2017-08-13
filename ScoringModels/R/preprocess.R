@@ -39,8 +39,8 @@ preprocess <- function(data_set,
     # Target -------------------------------------------------------------------
     objective <-
         data_desc$Variable[data_desc$in_model == "objective"]
-    if (length(objective != 1))
-        stop("Unique objective variable must be specified.")
+    # if (length(objective != 1))
+    #     stop("Unique objective variable must be specified.")
 
     # Artificially excluded ----------------------------------------------------
     exclude_var_1 <- data_desc$Variable[data_desc$in_model == "no"]

@@ -26,6 +26,9 @@ prop.test <- function(y1, n1, y2, n2, sig.level = 0.05,
 label.numeric <- function(x, cutp, right = TRUE) {
     if (!is.numeric(x))
         stop("'x' must be numeric")
+    if (length(cutp) == 0) {
+        return(factor(rep(1, length(x)), labels = 'unbinned'))
+    }
     cutp <- sort(unique(cutp))
 
     y <- rep(0, length(x))

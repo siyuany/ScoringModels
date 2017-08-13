@@ -1,14 +1,20 @@
 #' Stepwise Logistic Regression
 #'
-#' @import stringr
+#' @importFrom pROC roc
+#' @importFrom pROC auc
+#' @import doParallel
+#' @import parallel
+#' @import foreach
 #' @export
 
 logistic_model <- function(df,
                            y,
                            summary_woe,
                            max_nvars = NULL,
+                           seed = NULL,
                            parallel = FALSE,
                            cv_nfold = 5,
+                           auc_revise = 0,
                            ...) {
     predictors <- colnames(df)
     if (!any(y != predictors)) {
@@ -18,75 +24,97 @@ logistic_model <- function(df,
     predictors_iv <- names(summary_woe)
     predictors <-
         intersect(predictors, paste0(predictors_iv, '_woe'))
-    
+
     start <- sapply(predictors, function(predictor) {
-        x <- substr(predictor, 1, str_length(predictor) - 4)
+        x <- substr(predictor, 1, stringr::str_length(predictor) - 4)
         summary_woe[[x]][['iv']]
     })
-    iter_form <- paste0(y, ' ~ ',
-                        names(start)[start == max(start, na.rm = TRUE)])
-    
+    iter_form <- as.formula(paste0(y, ' ~ 1'))
+
     step_record <- list()
     i <- 1
-    
-    if (!parallel) {
-        while (TRUE) {
-            round_name <- paste0('Round_', i)
-            i <- i + 1
-            
-            auc
-            
+
+    if (is.null(seed))
+        seed <- sample(1:10000, 1)
+
+    registerDoParallel(detectCores(logical = FALSE))
+    while (TRUE) {
+        round_name <- paste0('Round_', i)
+        i <- i + 1
+        existed_terms <- all.vars(formula)[-1]
+        model.accuracy <- data.frame(Model = NULL,
+                                     Accuracy = NULL,
+                                     SD = NULL)
+        model.accuracy <-
+            foreach(new_var = predictors[!predictors %in% existed_terms],
+                    .combine = rbind) %dopar% {
+                        new_formula <- update(iter_form,
+                                              paste0('. ~ . + ', new_var))
+                        acc <-
+                            cv.glm(new_formula,
+                                   df,
+                                   seed = seed,
+                                   family = binomial('logit'))
+                        data.frame(Model = paste('+ ', new_var),
+                                   Accuracy = acc[1] - auc_revise * acc[2],
+                                   SD = acc[2])
+                    }
+        if (length(existed_terms) >= 2) {
+            model.accuracy <- rbind(
+            model.accuracy,
+            foreach(old_var = existed_terms,
+                    .combine = rbind) %dopar% {
+                        new_formula <- update(iter_form, paste0('. ~ . - ', old_var))
+                        acc <- cv.glm(new_formula,
+                                      df,
+                                      seed = seed,
+                                      family = binomial('logit'))
+                        data.frame(Model = paste('- ', old_var),
+                                   Accuracy = acc[1] - auc_revise * acc[2],
+                                   SD = acc[2])
+                    })
         }
-    } else {
-        
+        acc <-
+            cv.glm(iter_form, df, seed = seed, family = binomial('logit'))
+
+        model.accuracy <-
+            rbind(data.frame(Model = '.',
+                             Accuracy = acc[1] - auc_revise * acc[2],
+                             SD = acc[2]),
+                  model.accuracy)
+        model.accuracy <-
+            model.accuracy[order(model.accuracy$Accuracy, decreasing = TRUE),]
+        new.var <- as.character(model.accuracy$Model[1])
+
+        if (new.var == '.')
+            break
+        # if ((model.accuracy[1, 'Accuracy'] - acc[1]) / model.accuracy[1, 'SD'] < 1)
+        #     break
+        if ((model.accuracy[1, 'Accuracy'] - acc[1]) / acc[1] < 0.01)
+            break
+
+        iter_form <- update(iter_form, paste0('. ~ . + ', new.var))
+        step_record[[round_name]] <-
+            list(formula = iter_form,
+                 revised_auc = model.accuracy[1, 'Accuracy'])
     }
+    stopImplicitCluster()
+    step_record
 }
 
-cv.glm <- function(formual,
-                   data,
-                   eval = function(y, yhat) mean((y - yhat) ^ 2),
-                   K = 5)
-{
-    call <- match.call()
-    if (!exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE))
-        runif(1)
-    seed <-
-        get(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
-    n <- nrow(data)
-    if ((K > n) || (K <= 1))
-        stop("'K' outside allowable range")
-    K.o <- K
-    K <- round(K)
-    kvals <- unique(round(n / (1L:floor(n / 2))))
-    temp <- abs(kvals - K)
-    if (!any(temp == 0))
-        K <- kvals[temp == min(temp)][1L]
-    if (K != K.o)
-        warning(gettextf("'K' has been set to %f", K), domain = NA)
-    f <- ceiling(n / K)
-    s <- sample0(rep(1L:K, f), n)
-    n.s <- table(s)
-    glm.y <- glmfit$y
-    cost.0 <- cost(glm.y, fitted(glmfit))
-    ms <- max(s)
-    CV <- 0
-    Call <- glmfit$call
-    for (i in seq_len(ms)) {
-        j.out <- seq_len(n)[(s == i)]
-        j.in <- seq_len(n)[(s != i)]
-        Call$data <- data[j.in, , drop = FALSE]
-        d.glm <- eval.parent(Call)
-        p.alpha <- n.s[i] / n
-        cost.i <- cost(glm.y[j.out], predict(d.glm, data[j.out,
-                                                         , drop = FALSE], type = "response"))
-        CV <- CV + p.alpha * cost.i
-        cost.0 <- cost.0 - p.alpha * cost(glm.y, predict(d.glm,
-                                                         data, type = "response"))
+cv.glm <- function(formula, data, seed, nfold = 10, ...) {
+    set.seed(seed)
+    n_obs <- nrow(data)
+    index <- sample(rep(1:nfold, length = n_obs))
+    formula = formula(formula)
+    response = all.vars(formula)[1]
+
+    accuracy <- vector(mode = 'numeric', length = nfold)
+    for (i in 1:10) {
+        rf.fit <- glm(formula, data[index != i, ], ...)
+        pred <- predict(rf.fit, newdata = data[index == i, ], type = 'response')
+        accuracy[i] <- auc(roc(data[index == i, response], pred))
     }
-    list(
-        call = call,
-        K = K,
-        eval = c(),
-        seed = seed
-    )
+
+    c(mean(accuracy), sd(accuracy))
 }

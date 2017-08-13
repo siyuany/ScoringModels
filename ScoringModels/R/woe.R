@@ -53,7 +53,7 @@ woe.default <- function(predictor, response, good = NA, ...) {
         c(Good = sum(z == 'Good'),
           Bad  = sum(z == 'Bad'))
     })
-    tbl <- as.data.frame(do.call(rbind, tbl))
+    tbl <- as.data.frame(do.call(rbind, tbl), stringsAsFactors = FALSE)
     tbl <- rbind(tbl, Total = apply(tbl, 2, sum))
     tbl <- cbind(Levels = rownames(tbl), tbl)
 

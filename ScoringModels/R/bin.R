@@ -2,6 +2,7 @@
 #'
 #' @import foreach
 #' @import doParallel
+#' @import parallel
 #' @export
 bin <- function(...) {
     UseMethod("bin")

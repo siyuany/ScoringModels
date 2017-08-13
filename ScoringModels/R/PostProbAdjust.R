@@ -7,8 +7,6 @@
 #' @param r0   the original (designated) bad rate
 #' @param r1   the bad rate in training set (after oversampling)
 #'
-#' @details
-#'
 #' @examples
 #' \dontrun{
 #' # Given the predicted probability 0.67, the original bad rate 0.05, and the

@@ -23,3 +23,4 @@ Binning based on Information Value
 
 \item \code{data.frame}: for date.frame
 }}
+

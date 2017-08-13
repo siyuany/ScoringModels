@@ -4,7 +4,8 @@
 \alias{logistic_model}
 \title{Stepwise Logistic Regression}
 \usage{
-logistic_model(df, y, summary_woe, max_nvars = NULL, parallel = FALSE, ...)
+logistic_model(df, y, summary_woe, max_nvars = NULL, seed = NULL,
+  parallel = FALSE, cv_nfold = 5, auc_revise = 0, ...)
 }
 \description{
 Stepwise Logistic Regression

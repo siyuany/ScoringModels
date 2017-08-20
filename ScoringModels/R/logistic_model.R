@@ -15,6 +15,7 @@ logistic_model <- function(df,
                            parallel = FALSE,
                            cv_nfold = 5,
                            auc_revise = 0,
+                           verbose = TRUE,
                            ...) {
     predictors <- colnames(df)
     if (!any(y != predictors)) {
@@ -41,7 +42,7 @@ logistic_model <- function(df,
     while (TRUE) {
         round_name <- paste0('Round_', i)
         i <- i + 1
-        existed_terms <- all.vars(formula)[-1]
+        existed_terms <- all.vars(iter_form)[-1]
         model.accuracy <- data.frame(Model = NULL,
                                      Accuracy = NULL,
                                      SD = NULL)
@@ -84,16 +85,23 @@ logistic_model <- function(df,
                   model.accuracy)
         model.accuracy <-
             model.accuracy[order(model.accuracy$Accuracy, decreasing = TRUE),]
+
+        if (verbose) {
+            cat(round_name, ":\n")
+            cat('Base formula: ')
+            print(iter_form)
+            print(model.accuracy)
+        }
         new.var <- as.character(model.accuracy$Model[1])
 
         if (new.var == '.')
             break
         # if ((model.accuracy[1, 'Accuracy'] - acc[1]) / model.accuracy[1, 'SD'] < 1)
         #     break
-        if ((model.accuracy[1, 'Accuracy'] - acc[1]) / acc[1] < 0.01)
-            break
+        # if ((model.accuracy[1, 'Accuracy'] - acc[1]) / acc[1] < 0.01)
+        #     break
 
-        iter_form <- update(iter_form, paste0('. ~ . + ', new.var))
+        iter_form <- update(iter_form, paste0('. ~ . ', new.var))
         step_record[[round_name]] <-
             list(formula = iter_form,
                  revised_auc = model.accuracy[1, 'Accuracy'])

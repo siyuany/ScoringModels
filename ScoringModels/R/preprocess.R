@@ -136,7 +136,7 @@ preprocess <- function(data_set,
         y
     })
     data_copy <- as.data.frame(data_copy, col.names = in_model,
-                               stringsAsFactors = FALSE)
+                               stringsAsFactors = TRUE)
     data_overview(data_copy, out_file = "cleaned_data")
     data_copy
 }

@@ -5,7 +5,7 @@
 \title{Stepwise Logistic Regression}
 \usage{
 logistic_model(df, y, summary_woe, max_nvars = NULL, seed = NULL,
-  parallel = FALSE, cv_nfold = 5, auc_revise = 0, ...)
+  parallel = FALSE, cv_nfold = 5, auc_revise = 0, verbose = TRUE, ...)
 }
 \description{
 Stepwise Logistic Regression

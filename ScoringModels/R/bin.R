@@ -14,10 +14,10 @@ bin.default <- function(predictor,
                         response,
                         result = c("cutpoints", "iv", "woe"),
                         good = NA,
+                        min_iv_incr = 0.05,
                         min_iv_inc = 0.001,
                         min_ratio = 0.05,
                         p = 0.05,
-                        parallel = TRUE,
                         ...) {
     y_levels <- sort(unique(response))
     if (length(y_levels) <= 1)
@@ -49,6 +49,7 @@ bin.default <- function(predictor,
             probs = seq(from = 0.01, to = 0.99, by = 0.01),
             type = 1
         ))
+    avail_cutp <- unique(round(avail_cutp, 3))
 
     bin.obj <- list(bands = c(min(x), max(x)),
                     iv  = c(0, 0, 0))
@@ -56,7 +57,6 @@ bin.default <- function(predictor,
     total_good <- sum(y == "Good")
     total_bad  <- sum(y == "Bad")
 
-    registerDoParallel(detectCores(logical = FALSE))
     cutp_iv <- function(point) {
         if (point %in% bin.obj$bands)
             return(list(bin.obj))
@@ -104,13 +104,7 @@ bin.default <- function(predictor,
     while (TRUE) {
         # print(bin.obj)
         res <- NULL
-        if (parallel) {
-            res <-
-                foreach(point = avail_cutp, .combine = "c") %dopar% cutp_iv(point)
-        } else {
-            res <-
-                foreach(point = avail_cutp, .combine = "c") %do% cutp_iv(point)
-        }
+        res <- foreach(point = avail_cutp, .combine = "c") %do% cutp_iv(point)
 
         ivs <- sapply(res, function(x)
             sum(x$iv))
@@ -118,17 +112,16 @@ bin.default <- function(predictor,
         best <- res[[max_iv_index]]
         inc <- sum(best$iv) - sum(bin.obj$iv)
 
-        if (inc > min_iv_inc) {
+        if ((inc > min_iv_inc) & (inc / sum(bin.obj$iv) > min_iv_incr)) {
             bin.obj <- best
-            next
+            #next
         } else {
             break
         }
     }
     # End binning
-    stopImplicitCluster()
 
-    cutp <- round(bin.obj$bands[c(-1, -length(bin.obj$bands))], 3)
+    cutp <- bin.obj$bands[c(-1, -length(bin.obj$bands))]
     switch(
         result,
         iv = sum(bin.obj$iv),

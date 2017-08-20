@@ -23,6 +23,7 @@ prop.test <- function(y1, n1, y2, n2, sig.level = 0.05,
     )
 }
 
+#' @export
 label.numeric <- function(x, cutp, right = TRUE) {
     if (!is.numeric(x))
         stop("'x' must be numeric")

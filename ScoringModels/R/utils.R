@@ -61,6 +61,10 @@ label.numeric <- function(x, cutp, right = TRUE) {
             paste0('[', interval[2:length(interval)])
     }
 
+    if (any(is.na(x))) {
+        interval <- c(interval, 'Missing')
+    }
+
     f <- factor(y)
     levels(f) <- interval
     f

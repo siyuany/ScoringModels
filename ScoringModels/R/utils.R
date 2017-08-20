@@ -61,5 +61,7 @@ label.numeric <- function(x, cutp, right = TRUE) {
             paste0('[', interval[2:length(interval)])
     }
 
-    factor(y, labels = interval)
+    f <- factor(y)
+    levels(f) <- interval
+    f
 }
